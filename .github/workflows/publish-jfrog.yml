@@ -1,0 +1,32 @@
+name: Publish to JFrog
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Note: id-token is for provenance. If Artifactory fails with it, 
+      # you may need to remove --provenance and this permission.
+      id-token: write 
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # Pointing to your JFrog Artifactory instance
+          registry-url: 'https://productdemo.jfrog.io/artifactory/api/npm/npm-dor-local'
+      
+      - run: npm ci
+      
+      # We attempt provenance, but be prepared to remove the flag 
+      # if your Artifactory instance doesn't support Sigstore/Provenance.
+      - run: npm publish --provenance --access public --verbose
+        env:
+          # setup-node automatically looks for NODE_AUTH_TOKEN 
+          # to configure the .npmrc for the registry-url above
+          NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
