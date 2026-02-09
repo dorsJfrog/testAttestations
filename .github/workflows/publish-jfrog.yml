@@ -17,18 +17,36 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://productdemo.jfrog.io/artifactory/api/npm/npm-dor-local'
-      
-      - name: Install Wiretap
+
+      - name: Install mitmproxy
         run: |
-          curl -sSL https://github.com/metlo-labs/wiretap/releases/latest/download/wiretap-linux-amd64 -o wiretap
-          chmod +x wiretap
+          sudo apt-get update
+          sudo apt-get install -y mitmproxy
 
       - run: npm ci
       
-      - name: Publish with Wiretap Inspection
-        # We wrap the command. The '--' tells wiretap to run everything after it.
-        # NODE_TLS_REJECT_UNAUTHORIZED=0 allows Wiretap to intercept the SSL traffic.
-        run: ./wiretap -- npm publish --provenance --access public --verbose
+      - name: Publish with mitmdump Inspection
+        run: |
+          # 1. Start mitmdump in the background. 
+          # --flow-detail 2 shows headers.
+          # We redirect output to a file so we can view it clearly later.
+          mitmdump --flow-detail 2 > proxy_logs.txt 2>&1 &
+          
+          # 2. Wait for mitmproxy to generate its CA certs
+          sleep 3
+          
+          # 3. Run npm publish through the proxy.
+          # https_proxy: tells npm where to send traffic
+          # NODE_EXTRA_CA_CERTS: tells Node to trust the mitmproxy cert
+          NODE_EXTRA_CA_CERTS=$HOME/.mitmproxy/mitmproxy-ca-cert.pem \
+          https_proxy=http://localhost:8080 \
+          npm publish --provenance --access public --verbose
         env:
           NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
-          NODE_TLS_REJECT_UNAUTHORIZED: '0'
+
+      - name: Display Proxy Logs
+        if: always()
+        run: |
+          echo "--- START OF PROXY LOGS ---"
+          cat proxy_logs.txt
+          echo "--- END OF PROXY LOGS ---"
