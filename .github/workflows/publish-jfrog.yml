@@ -29,9 +29,9 @@ jobs:
       - name: Publish with mitmdump Inspection
         run: |
           # 1. Start mitmdump in the background. 
-          # --flow-detail 2 shows headers.
+          # --flow-detail 3 shows headers.
           # We redirect output to a file so we can view it clearly later.
-          mitmdump --flow-detail 2 > proxy_logs.txt 2>&1 &
+          mitmdump --flow-detail 3 > proxy_logs.txt 2>&1 &
           
           # 2. Wait for mitmproxy to generate its CA certs
           sleep 3
