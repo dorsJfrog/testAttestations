@@ -9,8 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Note: id-token is for provenance. If Artifactory fails with it, 
-      # you may need to remove --provenance and this permission.
       id-token: write 
     steps:
       - uses: actions/checkout@v4
@@ -18,15 +16,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          # Pointing to your JFrog Artifactory instance
           registry-url: 'https://productdemo.jfrog.io/artifactory/api/npm/npm-dor-local'
       
+      - name: Install Wiretap
+        run: |
+          curl -sSL https://github.com/metlo-labs/wiretap/releases/latest/download/wiretap-linux-amd64 -o wiretap
+          chmod +x wiretap
+
       - run: npm ci
       
-      # We attempt provenance, but be prepared to remove the flag 
-      # if your Artifactory instance doesn't support Sigstore/Provenance.
-      - run: npm publish --provenance --access public --verbose
+      - name: Publish with Wiretap Inspection
+        # We wrap the command. The '--' tells wiretap to run everything after it.
+        # NODE_TLS_REJECT_UNAUTHORIZED=0 allows Wiretap to intercept the SSL traffic.
+        run: ./wiretap -- npm publish --provenance --access public --verbose
         env:
-          # setup-node automatically looks for NODE_AUTH_TOKEN 
-          # to configure the .npmrc for the registry-url above
           NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
+          NODE_TLS_REJECT_UNAUTHORIZED: '0'
