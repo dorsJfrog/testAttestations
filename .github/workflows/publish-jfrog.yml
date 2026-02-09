@@ -41,7 +41,7 @@ jobs:
           # NODE_EXTRA_CA_CERTS: tells Node to trust the mitmproxy cert
           NODE_EXTRA_CA_CERTS=$HOME/.mitmproxy/mitmproxy-ca-cert.pem \
           https_proxy=http://localhost:8080 \
-          npm publish --provenance --access restricted --verbose
+          npm publish --provenance --access public --verbose
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
