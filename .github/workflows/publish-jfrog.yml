@@ -16,7 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+          registry-url: 'https://productdemo.jfrog.io/artifactory/api/npm/npm-dor-local'
+          # registry-url: 'https://registry.npmjs.org'
 
       - name: Install mitmproxy
         run: |
@@ -42,7 +43,8 @@ jobs:
           https_proxy=http://localhost:8080 \
           npm publish --provenance --access public --verbose
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
+          # NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Display Proxy Logs
         if: always()
